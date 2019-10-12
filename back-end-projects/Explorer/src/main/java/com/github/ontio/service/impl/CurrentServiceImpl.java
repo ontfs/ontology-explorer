@@ -21,7 +21,10 @@ package com.github.ontio.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.ontio.dao.*;
-import com.github.ontio.model.*;
+import com.github.ontio.model.Contracts;
+import com.github.ontio.model.Oep4;
+import com.github.ontio.model.Oep5;
+import com.github.ontio.model.Oep8;
 import com.github.ontio.paramBean.Result;
 import com.github.ontio.service.ICurrentService;
 import com.github.ontio.utils.ConfigParam;
@@ -35,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -74,19 +76,14 @@ public class CurrentServiceImpl implements ICurrentService {
     @Autowired
     private ConfigParam configParam;
 
+    @Autowired
     private OntologySDKService sdk;
 
-    private synchronized void initSDK() {
-        if (sdk == null) {
-            sdk = OntologySDKService.getInstance(configParam);
-        }
-    }
 
     @Override
     public Result querySummaryInfo() {
         Map summary = currentMapper.selectSummaryInfo();
        // List<String> addrList = transactionDetailMapper.selectAllAddress();
-        initSDK();
 //        int nodeCount = sdk.getNodeCount();
         Map<String, Object> rs = new HashMap();
 
@@ -106,7 +103,6 @@ public class CurrentServiceImpl implements ICurrentService {
      */
     @Override
     public Result registerContractInfo(JSONObject reqObj) {
-        initSDK();
 
         //TODO 首先更新合约总表，再更新token子表（oep4和oep8）, 需要联系信息
         String contractHash = reqObj.getString("contractHash");

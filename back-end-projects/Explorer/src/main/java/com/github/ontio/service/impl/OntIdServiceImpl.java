@@ -58,14 +58,8 @@ public class OntIdServiceImpl implements IOntIdService {
     private CurrentMapper currentMapper;
     @Autowired
     private ConfigParam configParam;
-
+    @Autowired
     private OntologySDKService sdkService;
-
-    private synchronized void initSDK() {
-        if (sdkService == null) {
-            sdkService = OntologySDKService.getInstance(configParam);
-        }
-    }
 
     @Override
     public Result queryOntIdList(int amount) {
@@ -129,7 +123,6 @@ public class OntIdServiceImpl implements IOntIdService {
             map.put("Fee", ((BigDecimal) map.get("Fee")).toPlainString());
         }
 
-        initSDK();
         String ddoStr = sdkService.getDDO(ontId);
         logger.info("{} query ddo info:{}", ontId, ddoStr);
 

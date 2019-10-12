@@ -62,14 +62,8 @@ public class TransactionServiceImpl implements ITransactionService {
     private CurrentMapper currentMapper;
     @Autowired
     private ConfigParam configParam;
-
-    private OntologySDKService sdk;
-
-    private synchronized void initSDK() {
-        if (sdk == null) {
-            sdk = OntologySDKService.getInstance(configParam);
-        }
-    }
+    @Autowired
+    private OntologySDKService sdkService;
 
     @Override
     public Result queryTxnList(int amount) {
@@ -160,7 +154,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     public Result queryAddressInfo(String address, int pageNumber, int pageSize) {
-        if (address.length() != 34){
+        if (address.length() != 34) {
             return Helper.result("QueryAddressInfo", ErrorInfo.PARAM_ERROR.code(), ErrorInfo.PARAM_ERROR.desc(), VERSION, false);
         }
 
@@ -274,7 +268,7 @@ public class TransactionServiceImpl implements ITransactionService {
     @Override
     public Result queryAddressInfo(String address, int pageNumber, int pageSize, String assetName) {
 
-        if (address.length() != 34){
+        if (address.length() != 34) {
             return Helper.result("QueryAddressInfo", ErrorInfo.PARAM_ERROR.code(), ErrorInfo.PARAM_ERROR.desc(), VERSION, false);
         }
 
@@ -341,7 +335,7 @@ public class TransactionServiceImpl implements ITransactionService {
     @Override
     public Result queryAddressInfoByTimeAndPage(String address, String assetName, int pageSize, int endTime) {
 
-        if (address.length() != 34){
+        if (address.length() != 34) {
             return Helper.result("QueryAddressInfo", ErrorInfo.PARAM_ERROR.code(), ErrorInfo.PARAM_ERROR.desc(), VERSION, false);
         }
 
@@ -353,7 +347,7 @@ public class TransactionServiceImpl implements ITransactionService {
         List<Map> dbTxnList = new ArrayList<>();
 
         if ("dragon".equals(assetName)) {
-            parmMap.put("AssetName", assetName+ "%");
+            parmMap.put("AssetName", assetName + "%");
             dbTxnList = transactionDetailMapper.selectTxnByAddressInfoAndTimePageDragon(parmMap);
         } else {
             parmMap.put("AssetName", assetName);
@@ -377,7 +371,7 @@ public class TransactionServiceImpl implements ITransactionService {
     @Override
     public Result queryAddressInfoByTime(String address, String assetName, int beginTime, int endTime) {
 
-        if (address.length() != 34){
+        if (address.length() != 34) {
             return Helper.result("QueryAddressInfo", ErrorInfo.PARAM_ERROR.code(), ErrorInfo.PARAM_ERROR.desc(), VERSION, false);
         }
 
@@ -390,7 +384,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
         List<Map> dbTxnList = new ArrayList<>();
         if ("dragon".equals(assetName)) {
-            parmMap.put("AssetName", assetName+ "%");
+            parmMap.put("AssetName", assetName + "%");
             dbTxnList = transactionDetailMapper.selectTxnByAddressInfoAndTimeDragon(parmMap);
         } else {
             parmMap.put("AssetName", assetName);
@@ -414,7 +408,7 @@ public class TransactionServiceImpl implements ITransactionService {
     @Override
     public Result queryAddressInfoByTime(String address, String assetName, int beginTime) {
 
-        if (address.length() != 34){
+        if (address.length() != 34) {
             return Helper.result("QueryAddressInfo", ErrorInfo.PARAM_ERROR.code(), ErrorInfo.PARAM_ERROR.desc(), VERSION, false);
         }
 
@@ -440,7 +434,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     public Result queryAddressBalance(String address) {
-        if (address.length() != 34){
+        if (address.length() != 34) {
             return Helper.result("QueryAddressInfo", ErrorInfo.PARAM_ERROR.code(), ErrorInfo.PARAM_ERROR.desc(), VERSION, false);
         }
 
@@ -458,12 +452,8 @@ public class TransactionServiceImpl implements ITransactionService {
     private List getAddressBalance(String address, String assetName) {
 
         List<Object> balanceList = new ArrayList<>();
-        if (address.length() != 34){
-            return balanceList;
-        }
 
-        initSDK();
-        Map<String, Object> balanceMap = sdk.getAddressBalance(address);
+        Map<String, Object> balanceMap = sdkService.getAddressBalance(address);
 
         if (Helper.isEmptyOrNull(assetName) || ConstantParam.ONG.equals(assetName)) {
 
@@ -483,7 +473,7 @@ public class TransactionServiceImpl implements ITransactionService {
             Map<String, Object> unBoundOngMap = new HashMap<>();
             unBoundOngMap.put("AssetName", "unboundong");
             //获取可提取的ong
-            String unBoundOng = sdk.getUnBoundOng(address);
+            String unBoundOng = sdkService.getUnBoundOng(address);
             if (Helper.isEmptyOrNull(unBoundOng)) {
                 unBoundOng = "0";
             }
@@ -506,14 +496,14 @@ public class TransactionServiceImpl implements ITransactionService {
         }
 
         if (Helper.isEmptyOrNull(assetName) || assetName.startsWith("pumpkin")) {
-            balanceList = getPumpkinBalance(sdk, balanceList, address, assetName);
+            balanceList = getPumpkinBalance(sdkService, balanceList, address, assetName);
         }
 
         //OEP4余额
         List<Map> oep4s = oep4Mapper.selectAllKeyInfo();
         for (Map map : oep4s) {
             String contract = (String) map.get("Contract");
-            BigDecimal balance = new BigDecimal(sdk.getAddressOep4Balance(address, contract)).divide(new BigDecimal(Math.pow(10, ((BigDecimal) map.get("Decimals")).intValue())));
+            BigDecimal balance = new BigDecimal(sdkService.getAddressOep4Balance(address, contract)).divide(new BigDecimal(Math.pow(10, ((BigDecimal) map.get("Decimals")).intValue())));
             if (balance.equals(new BigDecimal(0))){
                 continue;
             }
@@ -530,7 +520,7 @@ public class TransactionServiceImpl implements ITransactionService {
         List<Map> oep5s = oep5Mapper.selectAllKeyInfo();
         for (Map map : oep5s) {
             String contract = (String) map.get("Contract");
-            BigDecimal balance = new BigDecimal(sdk.getAddressOep5Balance(address, contract));
+            BigDecimal balance = new BigDecimal(sdkService.getAddressOep5Balance(address, contract));
             if (balance.equals(new BigDecimal(0))){
                 continue;
             }
@@ -552,7 +542,7 @@ public class TransactionServiceImpl implements ITransactionService {
                 continue;
             }
 
-            JSONArray balanceArray = sdk.getAddressOpe8Balance(address, contract);
+            JSONArray balanceArray = sdkService.getAddressOpe8Balance(address, contract);
             String[] symbols = symbol.split(",");
             for (int i = 0; i < symbols.length; i++){
                 if (Integer.parseInt((String) balanceArray.get(i)) == 0){
@@ -909,6 +899,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     /**
      * 查询地址所有交易
+     *
      * @param address
      * @return
      */
@@ -928,15 +919,13 @@ public class TransactionServiceImpl implements ITransactionService {
 
                 if (ConstantParam.ONG.equals(map.get("AssetName"))) {
                     map.put("Amount", ((BigDecimal) map.get("Amount")).divide(ConstantParam.ONT_TOTAL).toPlainString());
-                }
-                else{
+                } else {
                     map.put("Amount", ((BigDecimal) map.get("Amount")).toPlainString());
                 }
             }
 
             rs.put("TxnList", list);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
