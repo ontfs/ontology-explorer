@@ -24,19 +24,17 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.ontio.OntSdk;
-import com.github.ontio.common.Address;
 import com.github.ontio.common.Helper;
-import com.github.ontio.core.transaction.Transaction;
-import com.github.ontio.smartcontract.neovm.abi.BuildParams;
+import com.github.ontio.smartcontract.neovm.Oep4;
+import com.github.ontio.smartcontract.neovm.Oep5;
+import com.github.ontio.smartcontract.neovm.Oep8;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,25 +42,15 @@ import java.util.Map;
  * @date 2018/2/27
  */
 
+//@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE, proxyMode = ScopedProxyMode.TARGET_CLASS)
+//@Scope("prototype")
 @Component
 public class OntologySDKService {
     private static final Logger logger = LoggerFactory.getLogger(OntologySDKService.class);
 
-    private static OntologySDKService instance = null;
-
     @Autowired
     private ConfigParam configParam;
 
-    public static synchronized OntologySDKService getInstance(ConfigParam param) {
-        if (instance == null) {
-            instance = new OntologySDKService(param);
-        }
-        return instance;
-    }
-
-    public OntologySDKService(ConfigParam param) {
-        this.configParam = param;
-    }
 
     public String getDDO(String ontId) {
         OntSdk ontSdk = getOntSdk();
@@ -75,19 +63,6 @@ public class OntologySDKService {
         }
 
         return ddoStr;
-    }
-
-    public int getNodeCount() {
-        OntSdk ontSdk = getOntSdk();
-        int nodeCount = 0;
-        try {
-            nodeCount = ontSdk.getConnect().getNodeCount();
-        } catch (Exception e) {
-            logger.error("get nodecount error...", e);
-            e.printStackTrace();
-        }
-
-        return nodeCount;
     }
 
     /**
@@ -119,9 +94,15 @@ public class OntologySDKService {
      * @return
      */
     public String getAddressOep4Balance(String address, String contractAddr) {
-        OntSdk ontSdk = getOep4OntSdk(contractAddr);
+        //OntSdk ontSdk = getOep4OntSdk(contractAddr);
+        OntSdk ontSdk = OntSdk.getInstance();
+        ontSdk.setRestful(configParam.MASTERNODE_RESTFUL_URL);
         try {
-            String balance = ontSdk.neovm().oep4().queryBalanceOf(address);
+            //must be new object,cannot singleton
+            Oep4 oep4 = new Oep4(ontSdk);
+            oep4.setContractAddress(contractAddr);
+            String balance =  oep4.queryBalanceOf(address);
+            //String balance = ontSdk.neovm().oep4().queryBalanceOf(address);
             return balance;
         } catch (Exception e) {
             logger.error("getAddressOep4Balance error...", e);
@@ -136,9 +117,15 @@ public class OntologySDKService {
      * @return
      */
     public String getAddressOep5Balance(String address, String contractAddr) {
-        OntSdk ontSdk = getOep5OntSdk(contractAddr);
+        //OntSdk ontSdk = getOep5OntSdk(contractAddr);
+        OntSdk ontSdk = OntSdk.getInstance();
+        ontSdk.setRestful(configParam.MASTERNODE_RESTFUL_URL);
         try {
-            String balance = ontSdk.neovm().oep5().queryBalanceOf(address);
+            //must be new object,cannot singleton
+            Oep5 oep5 = new Oep5(ontSdk);
+            oep5.setContractAddress(contractAddr);
+            String balance = oep5.queryBalanceOf(address);
+            //String balance = ontSdk.neovm().oep5().queryBalanceOf(address);
             return balance;
         } catch (Exception e) {
             logger.error("getAddressOep4Balance error...", e);
@@ -153,14 +140,19 @@ public class OntologySDKService {
      * @return
      */
     public JSONArray getAddressOpe8Balance(String address, String codeHash) {
+        //OntSdk ontSdk = getOep8OntSdk(codeHash);
         JSONArray balanceArray = new JSONArray();
+        OntSdk ontSdk = OntSdk.getInstance();
+        ontSdk.setRestful(configParam.MASTERNODE_RESTFUL_URL);
         try {
-            OntSdk ontSdk = getOep8OntSdk(codeHash);
-            String balance = ontSdk.neovm().oep8().balancesOf(address);
+            //must be new object,cannot singleton
+            Oep8 oep8 = new Oep8(ontSdk);
+            oep8.setContractAddress(codeHash);
+            String balance = oep8.balancesOf(address);
+            //String balance = ontSdk.neovm().oep8().balancesOf(address);
             balanceArray = JSON.parseArray(balance);
         } catch (Exception e) {
             logger.error("getAddressOpe8Balance error...", e);
-            e.printStackTrace();
 
             balanceArray = new JSONArray();
             balanceArray.add("0");
@@ -173,7 +165,6 @@ public class OntologySDKService {
             balanceArray.add("0");
             return balanceArray;
         }
-
         return balanceArray;
     }
 
