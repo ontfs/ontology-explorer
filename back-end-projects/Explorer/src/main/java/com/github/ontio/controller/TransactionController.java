@@ -208,20 +208,6 @@ public class TransactionController {
         return rs;
     }
 
-    /**
-     * query all address information
-     *
-     * @return
-     */
-/*    @RequestMapping(value = "/address/list", method = RequestMethod.GET)
-    @ResponseBody
-    public Result queryAddressList() {
-
-        logger.info("########{}.{} begin...", CLASS_NAME, Helper.currentMethod());
-
-        Result rs = transactionService.queryAddressList();
-        return rs;
-    }*/
 
     /**
      * query all address information
