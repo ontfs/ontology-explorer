@@ -3,6 +3,7 @@ package com.github.ontio;
 import org.apache.ibatis.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.github.ontio.ExplorerRedisCache.SpringAccessor.getRedisTemplate;
 /**
  * @author zhouq
  * @version 1.0
@@ -28,7 +30,7 @@ public class ExplorerRedisCache implements Cache {
     // 读写锁
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
 
-    private RedisTemplate<String, Object> redisTemplate = ApplicationContextProvider.getBean("redisTemplate");
+    //private RedisTemplate<String, Object> redisTemplate = ApplicationContextProvider.getBean("redisTemplate");
 
     private String id = "defaultrediscacheid001";
 
@@ -56,7 +58,7 @@ public class ExplorerRedisCache implements Cache {
         logger.info("##putObject. key:{}, value:{}##", key, value);
         if (value != null) {
             // 向Redis中添加数据，有效时间是2天
-            redisTemplate.opsForValue().set(key.toString(), value, 2, TimeUnit.DAYS);
+            getRedisTemplate().opsForValue().set(key.toString(), value, 2, TimeUnit.DAYS);
         }
     }
 
@@ -65,7 +67,7 @@ public class ExplorerRedisCache implements Cache {
         logger.info("##getObject. key:{}##", key.toString());
         try {
             if (key != null) {
-                Object obj = redisTemplate.opsForValue().get(key.toString());
+                Object obj = getRedisTemplate().opsForValue().get(key.toString());
        //         logger.info("##getRedisObject. value:{}", obj);
                 return obj;
             }
@@ -91,7 +93,7 @@ public class ExplorerRedisCache implements Cache {
         logger.info("##removeObject. key:{}##", key.toString());
         try {
             if (key != null) {
-                redisTemplate.delete(key.toString());
+                getRedisTemplate().delete(key.toString());
             }
         } catch (Exception e) {
         }
@@ -102,10 +104,10 @@ public class ExplorerRedisCache implements Cache {
     public void clear() {
         logger.info("clear Redis Cache,this.id:{}",this.id);
         try {
-            Set<String> keys = redisTemplate.keys("*:" + this.id + "*");
+            Set<String> keys = getRedisTemplate().keys("*:" + this.id + "*");
             if (!CollectionUtils.isEmpty(keys)) {
                 logger.info("keys:{}",keys);
-                redisTemplate.delete(keys);
+                getRedisTemplate().delete(keys);
             }
         } catch (Exception e) {
         }
@@ -114,7 +116,7 @@ public class ExplorerRedisCache implements Cache {
     @Override
     public int getSize() {
         logger.info("##get Redis Cache Size##");
-        Long size = (Long) redisTemplate.execute(new RedisCallback<Long>() {
+        Long size = (Long) getRedisTemplate().execute(new RedisCallback<Long>() {
             @Override
             public Long doInRedis(RedisConnection connection) throws DataAccessException {
                 return connection.dbSize();
@@ -129,5 +131,23 @@ public class ExplorerRedisCache implements Cache {
         return this.readWriteLock;
     }
 
+
+    // RedisCache is instantiated by MyBatis, however we wish to use a Spring managed RedisTemplate.  To avoid race
+    // conditions between Spring context initialization, and MyBatis, use getRedisTemplate() to access this.
+    static final class SpringAccessor {
+        private static RedisTemplate<String, Object> redisTemplate;
+
+        static RedisTemplate<String, Object> getRedisTemplate() {
+            // locally cache the RedisTemplate as that is not expected to change
+            if (redisTemplate == null) {
+                try {
+                    redisTemplate = ApplicationContextProvider.getBean("redisTemplate");
+                } catch (BeansException ex) {
+                    logger.warn("##Spring Redis template is currently not available.");
+                }
+            }
+            return redisTemplate;
+        }
+    }
 
 }
