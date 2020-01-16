@@ -23,7 +23,9 @@ import com.github.ontio.mapper.*;
 import com.github.ontio.model.dao.*;
 import com.github.ontio.model.dto.NodeInfoOnChainDto;
 import com.github.ontio.service.INodesService;
+import com.github.ontio.util.OntologySDKService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +52,11 @@ public class NodesServiceImpl implements INodesService {
 
     private final NodeInfoOnChainMapper nodeInfoOnChainMapper;
 
+    private final StorageNodeInfoMapper storageNodeInfoMapper;
+
     private final NodeInfoOffChainMapper nodeInfoOffChainMapper;
+
+    private final OntologySDKService ontologySDKService;
 
     @Autowired
     public NodesServiceImpl(ParamsConfig paramsConfig,
@@ -60,7 +66,9 @@ public class NodesServiceImpl implements INodesService {
                             NodeRankChangeMapper nodeRankChangeMapper,
                             NodeInfoOnChainMapper nodeInfoOnChainMapper,
                             NodeRankHistoryMapper nodeRankHistoryMapper,
-                            NodeInfoOffChainMapper nodeInfoOffChainMapper) {
+                            NodeInfoOffChainMapper nodeInfoOffChainMapper,
+                            StorageNodeInfoMapper storageNodeInfoMapper,
+                            OntologySDKService ontologySDKService) {
         this.paramsConfig = paramsConfig;
         this.nodeBonusMapper = nodeBonusMapper;
         this.netNodeInfoMapper = netNodeInfoMapper;
@@ -69,6 +77,8 @@ public class NodesServiceImpl implements INodesService {
         this.nodeInfoOnChainMapper = nodeInfoOnChainMapper;
         this.nodeRankHistoryMapper = nodeRankHistoryMapper;
         this.nodeInfoOffChainMapper = nodeInfoOffChainMapper;
+        this.storageNodeInfoMapper = storageNodeInfoMapper;
+        this.ontologySDKService = ontologySDKService;
     }
 
     public long getBlkCountToNxtRnd() {
@@ -99,7 +109,7 @@ public class NodesServiceImpl implements INodesService {
                 NodeRankChange nodeRankChange = nodeRankChangeMap.getOrDefault(nodeInfo.getPublicKey(), null);
                 if (nodeRankChange == null) {
                     nodeInfoOnChainWithRankChanges.add(new NodeInfoOnChainWithRankChange(nodeInfo, 0));
-                }else {
+                } else {
                     nodeInfoOnChainWithRankChanges.add(new NodeInfoOnChainWithRankChange(nodeInfo, nodeRankChange));
                 }
             }
@@ -297,6 +307,16 @@ public class NodesServiceImpl implements INodesService {
     }
 
     @Override
+    public long getStorageNodeCount() {
+        try {
+            return storageNodeInfoMapper.selectStorageNodeCount();
+        } catch (Exception e) {
+            log.warn("Selecting candidate node count failed: {}", e.getMessage());
+            return -1;
+        }
+    }
+
+    @Override
     public long getSyncNodesCount() {
         try {
             return nodeInfoOnChainMapper.selectSyncNodesCount();
@@ -339,6 +359,31 @@ public class NodesServiceImpl implements INodesService {
             log.warn("Selecting node rank change info failed: {}", e.getMessage());
             return new ArrayList<>();
         }
+    }
+
+    @Override
+    public List<StorageNodeInfoDetail> getStorageNodeInfo() throws Exception {
+        List<StorageNodeInfoDetail> list = storageNodeInfoMapper.selectStorageNode();
+        for (StorageNodeInfoDetail info : list) {
+            String address = info.getAddress();
+            StorageNodeInfoDetail detail = ontologySDKService.getStorageNodeDetail(address);
+            info.setPledge(detail.getPledge());
+            info.setProfit(detail.getProfit());
+            info.setVolume(detail.getVolume());
+            info.setRestVol(detail.getRestVol());
+            info.setServiceTime(detail.getServiceTime());
+            info.setMinPdpInterval(detail.getMinPdpInterval());
+        }
+        return list;
+    }
+
+    @Override
+    public StorageNodeInfoDetail getStorageNodeInfoDetail(String publicKey) throws Exception {
+        StorageNodeInfo storageNodeInfo = storageNodeInfoMapper.selectByPrimaryKey(publicKey);
+        String address = storageNodeInfo.getAddress();
+        StorageNodeInfoDetail detail = ontologySDKService.getStorageNodeDetail(address);
+        BeanUtils.copyProperties(storageNodeInfo,detail);
+        return detail;
     }
 
 }

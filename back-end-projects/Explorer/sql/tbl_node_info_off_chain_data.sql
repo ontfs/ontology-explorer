@@ -1,0 +1,11 @@
+
+-- ----------------------------
+-- Records of tbl_node_info_off_chain
+-- ----------------------------
+INSERT INTO `tbl_node_info_off_chain` VALUES ('Consensus Node 1', 'ATV1kMRdkm85dnr9Uewwx7Z1WctTtSZHsF', '', '027ee085d2d5e6106195e015cbb6ff0a605a4b10baa8971b701eefaea43e2afa2b', 0, '', 'https://i.postimg.cc/WzbsyBvW/C3-B8310-FFC1-B46-DA82-C8-ED7910-C2-AD61.png', 'Singapore', 103.51, 1.18, '', '', '');
+INSERT INTO `tbl_node_info_off_chain` VALUES ('Consensus Node 2', 'AYszGfEYKeSCYmM3XTpW1Ezxzi3yqETSoH', '', '02cfbb0ea5f8ed602abb538e0af5b6ecc35cd8dc17fab54f6362e65e52061147bb', 0, '', 'https://i.postimg.cc/WzbsyBvW/C3-B8310-FFC1-B46-DA82-C8-ED7910-C2-AD61.png', 'Singapore', 103.51, 1.18, '', '', '');
+INSERT INTO `tbl_node_info_off_chain` VALUES ('Consensus Node 4', 'AGqidaCADFbRyoZ1ZSkVbLCk5RihZBmAhJ', '', '03433eac294e5c458b87bed0a69724f3c79f8a4580abab3eaa6f6f2138685c0761', 0, '', 'https://i.postimg.cc/WzbsyBvW/C3-B8310-FFC1-B46-DA82-C8-ED7910-C2-AD61.png', 'Singapore', 103.51, 1.18, '', '', '');
+INSERT INTO `tbl_node_info_off_chain` VALUES ('Consensus Node 3', 'AKzGbT3nPLiJCMP6qt236yggY5PR8ogQcu', '', '0360b020067bdfd54f3c2d3a71cc26576641e3cc57e1872831ee9562cb58bf0780', 0, '', 'https://i.postimg.cc/WzbsyBvW/C3-B8310-FFC1-B46-DA82-C8-ED7910-C2-AD61.png', 'Singapore', 103.51, 1.18, '', '', '');
+INSERT INTO `tbl_node_info_off_chain` VALUES ('Consensus Node 5', 'ANjrPGNhtJDL6ghEfQXq2ZKBzFgw8pP4Fz', '', '037e42a5ab4dfeb276ddcdacb03ba48ed2b0c703628f37bad30653c7a674da202a', 0, '', 'https://i.postimg.cc/WzbsyBvW/C3-B8310-FFC1-B46-DA82-C8-ED7910-C2-AD61.png', 'Singapore', 103.51, 1.18, '', '', '');
+INSERT INTO `tbl_node_info_off_chain` VALUES ('Consensus Node 6', 'AQvtbSyACZgoiqnPkfr2XEXTcRsniUPTkj', '', '039cdf2ea6aa82974f182f31703838b892bcad3b3192311b8c22983398eed1198b', 0, '', 'https://i.postimg.cc/WzbsyBvW/C3-B8310-FFC1-B46-DA82-C8-ED7910-C2-AD61.png', 'Singapore', 103.51, 1.18, '', '', '');
+INSERT INTO `tbl_node_info_off_chain` VALUES ('Consensus Node 7', 'ATLgbtASPMqjvLpz1kaU6tk36CsURVMiz9', '', '03da99c40d2c5f028f13413153cd151f59d70923da3f57e6c108c9986c1b6e93a1', 0, '', 'https://i.postimg.cc/WzbsyBvW/C3-B8310-FFC1-B46-DA82-C8-ED7910-C2-AD61.png', 'Singapore', 103.51, 1.18, '', '', '');

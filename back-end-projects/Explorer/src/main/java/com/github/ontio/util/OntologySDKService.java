@@ -29,12 +29,19 @@ import com.github.ontio.common.Helper;
 import com.github.ontio.config.ParamsConfig;
 import com.github.ontio.core.payload.InvokeWasmCode;
 import com.github.ontio.core.transaction.Transaction;
+import com.github.ontio.io.BinaryReader;
+import com.github.ontio.model.dao.StorageNodeInfoDetail;
+import com.github.ontio.sdk.exception.SDKException;
+import com.github.ontio.smartcontract.nativevm.abi.NativeBuildParams;
+import com.github.ontio.smartcontract.nativevm.abi.Struct;
 import com.github.ontio.smartcontract.neovm.abi.BuildParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -293,6 +300,67 @@ public class OntologySDKService {
         wm.setRestful(paramsConfig.MASTERNODE_RESTFUL_URL);
         wm.neovm().oep5().setContractAddress(codeHash);
         return wm;
+    }
+
+    public StorageNodeInfoDetail getStorageNodeDetail(String addr) throws Exception {
+        OntSdk wm = OntSdk.getInstance();
+        wm.setRestful(paramsConfig.MASTERNODE_RESTFUL_URL);
+        Address address = Address.decodeBase58(addr);
+
+        String contractAddress = "0000000000000000000000000000000000000008";
+        OntSdk sdk = getOntSdk();
+        List list = new ArrayList();
+        list.add(new Struct().add(address));
+        byte[] arg = NativeBuildParams.createCodeParamsScript(list);
+        Transaction tx = sdk.vm().buildNativeParams(new Address(Helper.hexToBytes(contractAddress)), "FsNodeQuery", arg, null, 0, 0);
+
+        JSONObject obj = (JSONObject) sdk.getConnect().sendRawTransactionPreExec(tx.toHexString());
+        String result = obj.getString("Result");
+
+        StorageNodeInfoDetail detail = new StorageNodeInfoDetail();
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(Helper.hexToBytes(result));
+        BinaryReader reader = new BinaryReader(bais);
+
+        boolean resultBoolean = reader.readBoolean();
+
+        byte[] noedeInfoBytes = reader.readVarBytes();
+
+        ByteArrayInputStream data = new ByteArrayInputStream(noedeInfoBytes);
+        BinaryReader br = new BinaryReader(data);
+
+        byte[] pledgeBytes = br.readVarBytes();
+        BigInteger pledge = Helper.BigIntFromNeoBytes(pledgeBytes);
+        detail.setPledge(pledge);
+
+        byte[] profitBytes = br.readVarBytes();
+        BigInteger profit = Helper.BigIntFromNeoBytes(profitBytes);
+        detail.setProfit(profit);
+
+        BigDecimal divideUnit = new BigDecimal(1024);
+        byte[] volumeBytes = br.readVarBytes();
+        BigInteger volume = Helper.BigIntFromNeoBytes(volumeBytes);
+        BigDecimal volumeDecimal = new BigDecimal(volume.toString()).divide(divideUnit, 2, BigDecimal.ROUND_DOWN).divide(divideUnit, 2, BigDecimal.ROUND_DOWN);
+        detail.setVolume(volumeDecimal.toPlainString() + "GB");
+
+        byte[] restVolBytes = br.readVarBytes();
+        BigInteger restVol = Helper.BigIntFromNeoBytes(restVolBytes);
+        BigDecimal restVolDecimal = new BigDecimal(restVol.toString()).divide(divideUnit, 2, BigDecimal.ROUND_DOWN).divide(divideUnit, 2, BigDecimal.ROUND_DOWN);
+        detail.setRestVol(restVolDecimal.toPlainString() + "GB");
+
+        byte[] serviceTimeBytes = br.readVarBytes();
+        BigInteger serviceTime = Helper.BigIntFromNeoBytes(serviceTimeBytes);
+        detail.setServiceTime(serviceTime);
+
+        byte[] minPdpIntervalBytes = br.readVarBytes();
+        BigInteger minPdpInter = Helper.BigIntFromNeoBytes(minPdpIntervalBytes);
+        detail.setMinPdpInterval(minPdpInter);
+
+        byte[] nodeAddrBytes = br.readVarBytes();
+        Address nodeAddr = Address.parse(Helper.toHexString(nodeAddrBytes));
+        byte[] nodeNetAddr = br.readVarBytes();
+        String ip = new String(nodeNetAddr);
+        return detail;
     }
 
 }

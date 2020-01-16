@@ -51,6 +51,8 @@ public interface INodesService {
 
     long getCandidateNodeCount();
 
+    long getStorageNodeCount();
+
     long getConsensusNodeCount();
 
     long getSyncNodesCount();
@@ -62,4 +64,9 @@ public interface INodesService {
     List<NodeRankChange> getNodeRankChange(boolean isDesc);
 
     List<NodeRankHistory> getRecentNodeRankHistory();
+
+    List<StorageNodeInfoDetail> getStorageNodeInfo() throws Exception;
+
+    StorageNodeInfoDetail getStorageNodeInfoDetail(String publicKey) throws Exception;
+
 }

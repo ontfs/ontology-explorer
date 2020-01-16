@@ -231,16 +231,19 @@ public class NodesController {
     @ApiOperation(value = "Get the count of nodes")
     @GetMapping(value = "/count")
     public ResponseBean getNodeCount() {
-        long syncNodeCount = nodesService.getSyncNodeCount();
+//        long syncNodeCount = nodesService.getSyncNodeCount();
+        long syncNodeCount = 0L;
         long consensusNodeCount = nodesService.getConsensusNodeCount();
         long candidateNodeCount = nodesService.getCandidateNodeCount();
-        if (syncNodeCount < 0 || consensusNodeCount < 0 || candidateNodeCount < 0) {
+        long storageNodeCount = nodesService.getStorageNodeCount();
+        if (syncNodeCount < 0 || consensusNodeCount < 0 || candidateNodeCount < 0 || storageNodeCount < 0) {
             return new ResponseBean(ErrorInfo.INNER_ERROR.code(), ErrorInfo.INNER_ERROR.desc(), "");
         }
-        long count = syncNodeCount + consensusNodeCount + candidateNodeCount;
+        long count = syncNodeCount + consensusNodeCount + candidateNodeCount + storageNodeCount;
         JSONObject result = new JSONObject();
         result.put("sync_node_count", syncNodeCount);
         result.put("consensus_node_count", consensusNodeCount);
+        result.put("storage_node_count", storageNodeCount);
         result.put("candidate_node_count", candidateNodeCount);
         result.put("total_node_count", count);
         return new ResponseBean(ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.desc(), result);
@@ -264,6 +267,23 @@ public class NodesController {
             return new ResponseBean(ErrorInfo.NOT_FOUND.code(), ErrorInfo.NOT_FOUND.desc(), new ArrayList<>());
         }
         return new ResponseBean(ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.desc(), nodePositionChangeList);
+    }
+
+    @ApiOperation(value = "Get storage nodes information")
+    @GetMapping(value = "/storage-node")
+    public ResponseBean getStorageNodeInfo() throws Exception {
+        List<StorageNodeInfoDetail> storageNodeInfoList = nodesService.getStorageNodeInfo();
+        if (storageNodeInfoList.size() == 0) {
+            return new ResponseBean(ErrorInfo.NOT_FOUND.code(), ErrorInfo.NOT_FOUND.desc(), storageNodeInfoList);
+        }
+        return new ResponseBean(ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.desc(), storageNodeInfoList);
+    }
+
+    @ApiOperation(value = "Get storage nodes detail information")
+    @GetMapping(value = "/storage-node/{public_key}")
+    public ResponseBean getStorageNodeInfoDetail(@PathVariable("public_key") String publicKey) throws Exception {
+        StorageNodeInfoDetail storageNodeInfoDetail = nodesService.getStorageNodeInfoDetail(publicKey);
+        return new ResponseBean(ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.desc(), storageNodeInfoDetail);
     }
 
 }
